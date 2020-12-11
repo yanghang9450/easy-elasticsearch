@@ -1,4 +1,4 @@
-package com.example.easy.config;
+package com.easy.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.Client;

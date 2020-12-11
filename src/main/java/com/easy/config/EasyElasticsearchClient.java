@@ -1,4 +1,4 @@
-package com.example.easy.config;
+package com.easy.config;
 
 import org.springframework.context.annotation.Import;
 

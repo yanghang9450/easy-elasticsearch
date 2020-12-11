@@ -1,4 +1,4 @@
-package com.example.easy.elasticsearch;
+package com.easy.elasticsearch;
 
 public enum EasySortEnum {
     DESC,
