@@ -10,7 +10,7 @@ public class Result<T> {
     private int totalCount;
     private int pageCount;
 
-    public Result(){};
+    public Result(){}
 
     public Result(List<T> data , int totalCount , int pageCount){
         this.data = data;

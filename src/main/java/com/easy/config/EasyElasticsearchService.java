@@ -13,6 +13,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -23,14 +26,12 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EasyElasticsearchTemplate {
-
-    /*@Autowired
-    EasyElasticsearchTemplate easyElasticsearchTemplate;*/
+@Component
+public class EasyElasticsearchService {
 
     @Autowired
+    @Qualifier("easyElasticsearch")
     private Client easyElasticsearch;
-
 
       public <T>Result<T> query(EasySearchBody searchBody, Class<T> clazz){
           Assert.notNull(searchBody,"searchBody is null");
@@ -38,8 +39,6 @@ public class EasyElasticsearchTemplate {
           Assert.notNull(searchBody.getType(),"search index type is null");
           Assert.notNull(searchBody.getSearchTargetField(),"search field is null");
           Assert.notNull(searchBody.getSearchValue(),"search value is null");
-
-          //SearchRequestBuilder builder = easyElasticsearch.prepareSearch(searchBody.getIndex()).setTypes(searchBody.getType());
           SearchResponse response = this.match(searchBody);
           List<T> results = new ArrayList<>();
           for (SearchHit hit : response.getHits().getHits() ){
