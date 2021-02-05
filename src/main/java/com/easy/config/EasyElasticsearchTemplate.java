@@ -13,7 +13,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -27,12 +26,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class EasyElasticsearchService {
+public class EasyElasticsearchTemplate {
 
     @Autowired
-    @Qualifier("easyElasticsearch")
     private Client easyElasticsearch;
 
+    /**
+     *
+     * @param searchBody search parameter object
+     * @param clazz clazz
+     * @param <T>
+     * @return Result<T>
+     */
       public <T>Result<T> query(EasySearchBody searchBody, Class<T> clazz){
           Assert.notNull(searchBody,"searchBody is null");
           Assert.notNull(searchBody.getIndex(),"search index is null");
@@ -76,7 +81,6 @@ public class EasyElasticsearchService {
           DisMaxQueryBuilder maxQueryBuilder = QueryBuilders.disMaxQuery();
           if (!CollectionUtils.isEmpty(conditions)){
               for (Condition condition : conditions){
-                    //if (maxQueryBuilder.innerQueries().size() > 0){
                         maxQueryBuilder.add(queryBuilder(condition.getMatch(),condition.getKey(),condition.getValue()));
               }
           }
@@ -87,11 +91,9 @@ public class EasyElasticsearchService {
          return query;
      }
 
-
      private DisMaxQueryBuilder condition(List<String> keys , String value){
           DisMaxQueryBuilder disMaxQueryBuilder = QueryBuilders.disMaxQuery();
           if (this.isChineseCharacters(value)){
-              //pinyin
               for (String key : keys){
                   QueryBuilder pinyinMatch = QueryBuilders.matchPhraseQuery(key,value);
                   QueryBuilder pinyinWild = QueryBuilders.wildcardQuery(key,value);

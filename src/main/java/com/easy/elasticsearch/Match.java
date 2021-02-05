@@ -6,6 +6,5 @@ public enum Match {
     NOT,
     NOT_IN,
     AND,
-    LIKE,
-    ;
+    LIKE,;
 }
