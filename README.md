@@ -1,7 +1,10 @@
 # easy-elasticsearch
 Easy Elasticsearch Guide
+
 1.Easy Elasticsearch 使用
+
     1.1 clone 下载项目
+    
     1.2 项目引用（两种方式）
         1.2.1：将clone 的项目打成jar 包引用
         1.2.2：pom.xml 新增配置
