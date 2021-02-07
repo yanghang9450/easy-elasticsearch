@@ -3,6 +3,7 @@ package com.easy.config;
 import com.alibaba.fastjson.JSON;
 import com.easy.elasticsearch.Condition;
 import com.easy.elasticsearch.EasySearchBody;
+import com.easy.elasticsearch.EasySortEnum;
 import com.easy.elasticsearch.Match;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -13,7 +14,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -65,12 +65,12 @@ public class EasyElasticsearchTemplate {
           if (!Objects.isNull(body.getSort())){
               Assert.notNull(body.getSort().getSortField(),"easy elasticsearch sort field is null");
               Assert.notNull(body.getSort().getOrder(),"easy elasticsearch sort order is null");
-              if (body.getSort().getOrder().equalsIgnoreCase("DESC")){
+              if (EasySortEnum.DESC.toString().equalsIgnoreCase(body.getSort().getOrder().toString())){
                   builder.addSort(body.getSort().getSortField(), SortOrder.DESC);
-              }else if (body.getSort().getOrder().equalsIgnoreCase("ASC")){
+              }else if (EasySortEnum.ASE.toString().equalsIgnoreCase(body.getSort().getOrder().toString())){
                   builder.addSort(body.getSort().getSortField(), SortOrder.ASC);
               }else{
-                  // throw exception
+                  builder.addSort(body.getSort().getSortField(), SortOrder.ASC);
               }
           }
           builder.setQuery(query);

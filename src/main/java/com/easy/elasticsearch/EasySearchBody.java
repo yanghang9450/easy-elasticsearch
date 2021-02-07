@@ -14,4 +14,6 @@ public class EasySearchBody {
     private List<Condition> conditions;
     private int page;
     private int size;
+    private boolean openIK;
+    private boolean openPinYin;
 }

@@ -45,6 +45,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
@@ -60,20 +61,40 @@
             <artifactId>transport-netty4-client</artifactId>
             <version>6.1.1</version>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.3</version>
         </dependency>
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.31</version>
         </dependency>
     </dependencies>
+    <distributionManagement>
+        <!--<repository>-->
+        <!--    <id>com.palmple.maven.central</id>-->
+        <!--    <name>Palmple Maven Central Repository</name>-->
+        <!--    <url>http://sonatype-nexus.palmple.com:8081/nexus/content/repositories/com.palmple.maven.central</url>-->
+        <!--</repository>-->
+        <repository>
+            <id>releases</id>
+            <url>http://134.175.44.239:8081/repository/java-release/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </repository>
+    </distributionManagement>
+    <build>
+        <plugins>
+        </plugins>
+    </build>
+
 </project>
