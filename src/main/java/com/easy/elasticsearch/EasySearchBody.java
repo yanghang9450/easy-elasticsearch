@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class EasySearchBody {
     private String index;
-    private String type;
+    private String indexType;
     private List<String> searchTargetField;
     private String searchValue;
     private EasySort sort;

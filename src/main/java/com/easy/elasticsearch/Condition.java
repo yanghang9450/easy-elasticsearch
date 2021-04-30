@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Condition {
-    private String match;
+    private Match match;
     private String key;
     private String value;
 }

@@ -31,17 +31,10 @@ public class EasyElasticsearchTemplate {
     @Autowired
     private Client easyElasticsearch;
 
-    /**
-     *
-     * @param searchBody search parameter object
-     * @param clazz clazz
-     * @param <T>
-     * @return Result<T>
-     */
       public <T>Result<T> query(EasySearchBody searchBody, Class<T> clazz){
           Assert.notNull(searchBody,"searchBody is null");
           Assert.notNull(searchBody.getIndex(),"search index is null");
-          Assert.notNull(searchBody.getType(),"search index type is null");
+          Assert.notNull(searchBody.getIndexType(),"search index type is null");
           Assert.notNull(searchBody.getSearchTargetField(),"search field is null");
           Assert.notNull(searchBody.getSearchValue(),"search value is null");
           SearchResponse response = this.match(searchBody);
@@ -57,7 +50,7 @@ public class EasyElasticsearchTemplate {
       }
 
       private SearchResponse match(EasySearchBody body){
-          SearchRequestBuilder builder = easyElasticsearch.prepareSearch(body.getIndex()).setTypes(body.getType());
+          SearchRequestBuilder builder = easyElasticsearch.prepareSearch(body.getIndex()).setTypes(body.getIndexType());
           if (body.getPage() != 0 && body.getSize() != 0){//Pagination
               builder.setFrom(body.getPage() * body.getSize()).setSize(body.getSize());
           }
@@ -81,7 +74,7 @@ public class EasyElasticsearchTemplate {
           DisMaxQueryBuilder maxQueryBuilder = QueryBuilders.disMaxQuery();
           if (!CollectionUtils.isEmpty(conditions)){
               for (Condition condition : conditions){
-                        maxQueryBuilder.add(queryBuilder(condition.getMatch(),condition.getKey(),condition.getValue()));
+                        maxQueryBuilder.add(queryBuilder(condition.getMatch().toString(),condition.getKey(),condition.getValue()));
               }
           }
          DisMaxQueryBuilder builder = this.condition(searchTargetField,searchValue);
