@@ -1,4 +1,4 @@
-package com.easy.config;
+package com.easy.elasticsearch;
 
 import lombok.Data;
 

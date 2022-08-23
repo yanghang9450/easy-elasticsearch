@@ -1,0 +1,10 @@
+match
+--会将搜索词分词，再与目标查询字段进行匹配，若分词中的任意一个词与目标字段匹配上，则可查询到
+matchPhrase
+--默认使用 match_phrase 时会精确匹配查询的短语，需要全部单词和顺序要完全一样，标点符号除外
+matchPhrasePrefix
+--match_phrase_prefix 和 match_phrase 用法是一样的，区别就在于它允许对最后一个词条前缀匹配
+term
+--输入的查询内容是什么，就会按照什么去查询，并不会解析查询内容，对它分词。
+wildcard
+--wildcard不分词查询，加*（相当于sql中的%）表示模糊查询，加keyword表示查不分词数据

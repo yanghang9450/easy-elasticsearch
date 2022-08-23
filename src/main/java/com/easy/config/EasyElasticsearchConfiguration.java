@@ -27,11 +27,10 @@ public class EasyElasticsearchConfiguration {
         TransportClient transportClient = null;
         try {
             if (!StringUtils.isEmpty(configProperties.getUsername()) && !StringUtils.isEmpty(configProperties.getPassword())){
-                StringBuffer xpack = new StringBuffer(configProperties.getUsername());
-                xpack.append(":").append(configProperties.getPassword());
+                String xpack = configProperties.getUsername() + ":" + configProperties.getPassword();
                 transportClient = new PreBuiltTransportClient(Settings.builder()
                         .put("cluster.name",configProperties.getName())
-                        .put("xpack.security,user",xpack.toString())
+                        .put("xpack.security,user", xpack)
                         .build());
             }else{
                 transportClient = new PreBuiltTransportClient(Settings.builder()
@@ -44,7 +43,7 @@ public class EasyElasticsearchConfiguration {
                 transportClient.addTransportAddress(transportAddress);
             }
         }catch (UnknownHostException e){
-            log.error("elasticsearch client error : ",e.getMessage());
+            throw new RuntimeException("elasticsearch client error : "+e.getMessage());
         }
         return transportClient;
     }
