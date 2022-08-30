@@ -41,8 +41,8 @@ public class EasyElasticsearchTemplate {
       private static final String Py = ".pinyin";
       private static final String StarKey = "*";
       private static final String SearchPyKey = "py";
-      private static final String SearchChKey = "CH";
-      private static final String SearchChPyKey = "CH_PY";
+      private static final String SearchChKey = "ch";
+      private static final String SearchChPyKey = "ch_py";
       private static final String DateDefaultFormat = "yyyy-MM-dd HH:mm:ss";
       private static final String Id = "_id";
 
@@ -115,7 +115,12 @@ public class EasyElasticsearchTemplate {
           }.getType()));
       }
 
-      public Result<String> delete(EasyDeleteIndex deleteIndex){
+    /**
+     * easy elasticsearch delete object
+     * @param deleteIndex delete request body
+     * @return Result<String>
+     */
+    public Result<String> delete(EasyDeleteIndex deleteIndex){
           this.indexIdAndConditionValid(deleteIndex.getId(),deleteIndex.getCondition());
           DisMaxQueryBuilder maxQueryBuilder = QueryBuilders.disMaxQuery();
           if (StringUtils.hasText(deleteIndex.getId())){
@@ -141,24 +146,8 @@ public class EasyElasticsearchTemplate {
                           }
                   );
         logger.info("delete data success");
-        return EasyResponse.build("success");
+        return EasyResponse.build("OK");
       }
-
-      /*public <T>Result<T> update(EasyUpdateIndex updateIndex , Class<T> clazz){
-          this.indexIdAndConditionValid(updateIndex.getId(),updateIndex.getCondition());
-          DisMaxQueryBuilder disMaxQueryBuilder = QueryBuilders.disMaxQuery();
-          if (StringUtils.hasText(updateIndex.getId())) disMaxQueryBuilder.add(QueryBuilders.termQuery(Id,updateIndex.getId()));
-          for (QueryBuilder builder : this.condition(updateIndex.getCondition())) disMaxQueryBuilder = this.joinQuery(disMaxQueryBuilder,builder);
-          UpdateByQueryRequestBuilder requestBuilder = new UpdateByQueryRequestBuilder(easyElasticsearch, UpdateByQueryAction.INSTANCE)
-                  .source(updateIndex.getIndex())
-                  .filter(
-                        disMaxQueryBuilder
-                  ).script(
-
-                  )
-          return EasyResponse.build(null);
-      }*/
-
       private void indexIdAndConditionValid(String id , List<Condition> conditions){
           if (StringUtils.isEmpty(id) && CollectionUtils.isEmpty(conditions)){
               throw new RuntimeException("delete object missing id or condition! Please set it correctly");
