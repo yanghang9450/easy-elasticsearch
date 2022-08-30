@@ -1,6 +1,5 @@
-package com.easy.elasticsearch;
+package com.easy.entity;
 
-import lombok.Data;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -31,7 +30,6 @@ public class EasySearchBody {
         this.openIK = builder.openIK;
         this.openPinYin = builder.openPinYin;
     }
-    @Data
     public static class Builder {
         private String index;
         private String indexType;
@@ -67,12 +65,7 @@ public class EasySearchBody {
             return this;
         }
         public Builder conditions(Condition... condition) {
-            List<Condition> conditions = new ArrayList<>();
-            Iterator<Condition> i = Arrays.stream(condition).iterator();
-            while (i.hasNext()){
-                conditions.add(i.next());
-            }
-            this.conditions = conditions ;
+            this.conditions = Condition.list(condition) ;
             return this;
         }
         public Builder openIK(boolean openIK) {

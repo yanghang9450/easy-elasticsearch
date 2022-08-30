@@ -1,4 +1,4 @@
-package com.easy.elasticsearch;
+package com.easy.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,18 +19,13 @@ public class Condition {
     private String key;
     private String value;
     protected List<Condition> mustCondition;
-
-    public List<Condition> join(Condition... condition){
-        if (condition == null) {
-            throw new IllegalArgumentException("inner must query clause cannot be null");
-        }else{
-            Iterator<Condition> i = Arrays.stream(condition).iterator();
-            mustCondition = new ArrayList<>();
-            while (i.hasNext()){
-                this.mustCondition.add(i.next());
-            }
+    protected static List<Condition> list(Condition ... condition){
+        List<Condition> conditions = new ArrayList<>();
+        Iterator<Condition> i = Arrays.stream(condition).iterator();
+        while (i.hasNext()){
+            conditions.add(i.next());
         }
-        return this.mustCondition;
+        return conditions;
     }
     public List<Condition> toList(){
         mustCondition = new ArrayList<>();

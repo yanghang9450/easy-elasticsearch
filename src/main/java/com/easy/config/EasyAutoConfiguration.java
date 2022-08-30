@@ -1,5 +1,6 @@
 package com.easy.config;
 
+import com.easy.elasticsearch.EasyElasticsearchTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
