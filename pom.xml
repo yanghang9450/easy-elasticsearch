@@ -87,16 +87,6 @@
         </dependency>
     </dependencies>
     <distributionManagement>
-        <!--<repository>-->
-        <!--    <id>com.palmple.maven.central</id>-->
-        <!--    <name>Palmple Maven Central Repository</name>-->
-        <!--    <url>http://sonatype-nexus.palmple.com:8081/nexus/content/repositories/com.palmple.maven.central</url>-->
-        <!--</repository>-->
-        <repository>
-            <id>releases</id>
-            <url>http://134.175.44.239:8081/repository/java-release/</url>
-            <uniqueVersion>false</uniqueVersion>
-        </repository>
     </distributionManagement>
     <build>
         <plugins>
