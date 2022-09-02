@@ -7,20 +7,20 @@ import com.easy.response.Result;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.DisMaxQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.*;
-import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -45,9 +45,8 @@ public class EasyElasticsearchTemplate {
       private static final String SearchChPyKey = "ch_py";
       private static final String DateDefaultFormat = "yyyy-MM-dd HH:mm:ss";
       private static final String Id = "_id";
-
       @Autowired
-      private Client easyElasticsearch;
+      private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
     /**
      * easy elasticsearch query function
@@ -59,10 +58,9 @@ public class EasyElasticsearchTemplate {
       public <T>Result<ListResult<T>> query(EasySearchBody searchBody, Class<T> clazz){
           Assert.notNull(searchBody,"searchBody is null");
           Assert.notNull(searchBody.getIndex(),"search index is null");
-          Assert.notNull(searchBody.getIndexType(),"search index type is null");
           Assert.notNull(searchBody.getSearchTargetField(),"search field is null");
           Assert.notNull(searchBody.getSearchValue(),"search value is null");
-          return EasyResponse.build(this.response(this.match(searchBody),clazz));
+          return EasyResponse.build(this.matchQuery(searchBody,clazz));
       }
 
     /**
@@ -71,22 +69,26 @@ public class EasyElasticsearchTemplate {
      * @param pageable pageable
      * @param index index
      * @param clazz class
-     * @param indexType indexType
      * @param <T> Object
      * @return <T>Result<ListResult<T>>
      */
-      public <T>Result<ListResult<T>> query(DisMaxQueryBuilder query, EasyRequestPageable pageable, String index, Class<T> clazz, String... indexType){
-          SearchRequestBuilder builder = easyElasticsearch.prepareSearch(index).setTypes(indexType);
+      public <T>Result<ListResult<T>> query(DisMaxQueryBuilder query, EasyRequestPageable pageable, String index, Class<T> clazz){
+          NativeSearchQueryBuilder nativeSearchQueryBuilder =  new NativeSearchQueryBuilder();
           if (pageable.getPage() != 0 && pageable.getSize() != 0)
-              builder.setFrom((pageable.getPage() -1 )).setSize(pageable.getSize());
+              nativeSearchQueryBuilder.withPageable(PageRequest.of((pageable.getPage() -1 ),pageable.getSize()));
+          else nativeSearchQueryBuilder.withPageable(PageRequest.of(0,20));
           if (!Objects.isNull(pageable.getSort()))
-              builder.addSort(
-                      pageable.getSort().getSortField(),
-                      (EasySortEnum.DESC.toString().equalsIgnoreCase(pageable.getSort().getOrder().toString())) ?
-                      SortOrder.DESC : SortOrder.ASC
-              );
-          builder.setQuery(query);
-          return EasyResponse.build(this.response(builder.execute().actionGet(),clazz));
+                nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(pageable.getSort().getSortField())
+                        .order((EasySortEnum.DESC.toString().equalsIgnoreCase(pageable.getSort().getOrder().toString())) ?
+                                SortOrder.DESC : SortOrder.ASC));
+          nativeSearchQueryBuilder.withQuery(query);
+          return EasyResponse.build(
+                  this.response(
+                          elasticsearchRestTemplate.search(nativeSearchQueryBuilder.build(),clazz, IndexCoordinates.of(index)),
+                          clazz,
+                          pageable.getSize()
+                  )
+          );
       }
 
     /**
@@ -104,15 +106,17 @@ public class EasyElasticsearchTemplate {
                           Collectors.toMap(
                                   InsertData::getKey, InsertData::getValue, (key1, key2) -> key1
                           ));
-          IndexResponse indexRequestBuilder = easyElasticsearch.prepareIndex(insertIndex.getIndex(),insertIndex.getIndexType(),insertIndex.getId())
-                  .setSource(collect)
-                  .get();
-          logger.info("insert data status : {}",indexRequestBuilder.status());
+          //elasticsearchRestTemplate.save(collect);
           Gson gson = new GsonBuilder()
                   .setDateFormat(DateDefaultFormat)
                   .create();
-          return EasyResponse.build(new Gson().fromJson(gson.toJson(collect), new TypeToken<T>() {
+          return EasyResponse.build(new Gson().fromJson(gson.toJson(elasticsearchRestTemplate.save(collect)), new TypeToken<T>() {
           }.getType()));
+         /* Gson gson = new GsonBuilder()
+                  .setDateFormat(DateDefaultFormat)
+                  .create();
+          return EasyResponse.build(new Gson().fromJson(gson.toJson(collect), new TypeToken<T>() {
+          }.getType()));*/
       }
 
     /**
@@ -129,7 +133,7 @@ public class EasyElasticsearchTemplate {
           for ( QueryBuilder builder : this.condition(deleteIndex.getCondition())){
               maxQueryBuilder = this.joinQuery(maxQueryBuilder,builder);
           }
-          new DeleteByQueryRequestBuilder(easyElasticsearch, DeleteByQueryAction.INSTANCE)
+          /*new DeleteByQueryRequestBuilder(easyElasticsearch, DeleteByQueryAction.INSTANCE)
                   .filter(maxQueryBuilder).source(deleteIndex.getIndex())
                   .execute(
                           new ActionListener<BulkByScrollResponse>() {
@@ -144,47 +148,48 @@ public class EasyElasticsearchTemplate {
                                   throw new RuntimeException(e.getMessage());
                               }
                           }
-                  );
+                  );*/
         logger.info("delete data success");
-        return EasyResponse.build("OK");
+        return EasyResponse.build(elasticsearchRestTemplate.delete(maxQueryBuilder,IndexCoordinates.of(deleteIndex.getIndex())));
       }
       private void indexIdAndConditionValid(String id , List<Condition> conditions){
-          if (StringUtils.isEmpty(id) && CollectionUtils.isEmpty(conditions)){
+          if (!StringUtils.hasText(id) && CollectionUtils.isEmpty(conditions)){
               throw new RuntimeException("delete object missing id or condition! Please set it correctly");
           }
       }
 
-      private <T>ListResult<T> response(SearchResponse response , Class<T> clazz){
+      private <T>ListResult<T> response(SearchHits<T> hits , Class<T> clazz , int size){
           List<T> results = new ArrayList<>();
-          for (SearchHit hit : response.getHits().getHits() ){
-              String sourceAsString = hit.getSourceAsString();
-              if (!StringUtils.isEmpty(sourceAsString)){
-                  results.add(new Gson().fromJson(sourceAsString,clazz));
-              }
+          for (SearchHit<T> hit : hits.getSearchHits() ){
+              results.add(new Gson().fromJson(hit.getContent().toString(),clazz));
           }
           if (CollectionUtils.isEmpty(results)) return new ListResult<T>(new ArrayList<>(),0,0);
           return new ListResult<>(
                   results,
-                  Long.valueOf(response.getHits().totalHits).intValue(),
-                  Long.valueOf(response.getHits().getTotalHits()).intValue()
+                  Long.valueOf(hits.getTotalHits()).intValue(),
+                  Long.valueOf((long) Math.ceil((double) (hits.getTotalHits() / size))).intValue()
           );
       }
-      private SearchResponse match(EasySearchBody body){
-          SearchRequestBuilder builder = easyElasticsearch.prepareSearch(body.getIndex()).setTypes(body.getIndexType());
-          if (body.getPageable().getPage() != 0 && body.getPageable().getSize() != 0){
-              builder.setFrom(body.getPageable().getPage() - 1).setSize(body.getPageable().getSize());
-          }
+      private <T>ListResult<T> matchQuery(EasySearchBody body, Class<T> clazz){
+          NativeSearchQueryBuilder nativeSearchQueryBuilder =  new NativeSearchQueryBuilder();
+          if (body.getPageable().getPage() != 0 && body.getPageable().getSize() != 0)
+              nativeSearchQueryBuilder.withPageable(PageRequest.of((body.getPageable().getPage() -1 ),body.getPageable().getSize()));
+          else nativeSearchQueryBuilder.withPageable(PageRequest.of(0,20));
+
           DisMaxQueryBuilder query = this.disMaxQuery(body);
           if (!Objects.isNull(body.getPageable().getSort())){
               Assert.notNull(body.getPageable().getSort().getSortField(),"easy elasticsearch sort field is null");
               Assert.notNull(body.getPageable().getSort().getOrder(),"easy elasticsearch sort order is null");
-              builder.addSort(
-                      body.getPageable().getSort().getSortField(),
-                      (EasySortEnum.DESC.toString().equalsIgnoreCase(body.getPageable().getSort().getOrder().toString())) ? SortOrder.DESC : SortOrder.ASC
-              );
+              nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(body.getPageable().getSort().getSortField())
+                      .order((EasySortEnum.DESC.toString().equalsIgnoreCase(body.getPageable().getSort().getOrder().toString())) ?
+                              SortOrder.DESC : SortOrder.ASC));
           }
-          builder.setQuery(query);
-          return builder.execute().actionGet();
+          nativeSearchQueryBuilder.withQuery(query);
+          return this.response(
+                  elasticsearchRestTemplate.search(nativeSearchQueryBuilder.build(),clazz, IndexCoordinates.of(body.getIndex())),
+                  clazz,
+                  body.getPageable().getSize()
+          );
       }
      private DisMaxQueryBuilder disMaxQuery(EasySearchBody body){
          DisMaxQueryBuilder maxQueryBuilder = QueryBuilders.disMaxQuery();

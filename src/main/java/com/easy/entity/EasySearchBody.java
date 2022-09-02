@@ -10,7 +10,6 @@ import java.util.List;
 @Getter
 public class EasySearchBody {
     private final String index;
-    private final String indexType;
     private final List<String> searchTargetField;
     private final String searchValue;
     private final EasyRequestPageable pageable;
@@ -22,7 +21,6 @@ public class EasySearchBody {
     }
     public EasySearchBody(Builder builder){
         this.index = builder.index;
-        this.indexType = builder.indexType;
         this.searchTargetField = builder.searchTargetField;
         this.searchValue = builder.searchValue;
         this.pageable = builder.pageable;
@@ -32,7 +30,6 @@ public class EasySearchBody {
     }
     public static class Builder {
         private String index;
-        private String indexType;
         private List<String> searchTargetField;
         private String searchValue;
         private EasyRequestPageable pageable;
@@ -41,10 +38,6 @@ public class EasySearchBody {
         private boolean openPinYin;
         public Builder index(String index) {
             this.index = index ;
-            return this;
-        }
-        public Builder indexType(String indexType) {
-            this.indexType = indexType ;
             return this;
         }
         public Builder searchTargetField(String... searchTargetField){
@@ -80,9 +73,8 @@ public class EasySearchBody {
         public Builder(){
 
         }
-        public Builder(String index, String indexType, List<String> searchTargetField, String searchValue, EasyRequestPageable pageable, List<Condition> conditions, boolean openIK, boolean openPinYin) {
+        public Builder(String index, List<String> searchTargetField, String searchValue, EasyRequestPageable pageable, List<Condition> conditions, boolean openIK, boolean openPinYin) {
             this.index = index;
-            this.indexType = indexType;
             this.searchTargetField = searchTargetField;
             this.searchValue = searchValue;
             this.pageable = pageable;
@@ -91,14 +83,13 @@ public class EasySearchBody {
             this.openPinYin = openPinYin;
         }
         public EasySearchBody build(){
-            return new EasySearchBody(new Builder(this.index,this.indexType,this.searchTargetField,this.searchValue,this.pageable,this.conditions,this.openIK,this.openPinYin));
+            return new EasySearchBody(new Builder(this.index,this.searchTargetField,this.searchValue,this.pageable,this.conditions,this.openIK,this.openPinYin));
         }
 
         @Override
         public String toString() {
             return "Builder{" +
                     "index='" + index + '\'' +
-                    ", indexType='" + indexType + '\'' +
                     ", searchTargetField=" + searchTargetField +
                     ", searchValue='" + searchValue + '\'' +
                     ", pageable=" + pageable +
@@ -112,7 +103,6 @@ public class EasySearchBody {
     public String toString() {
         return "EasySearchBody{" +
                 "index='" + index + '\'' +
-                ", indexType='" + indexType + '\'' +
                 ", searchTargetField=" + searchTargetField +
                 ", searchValue='" + searchValue + '\'' +
                 ", pageable=" + pageable +

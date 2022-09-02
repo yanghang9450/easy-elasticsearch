@@ -1,18 +1,14 @@
 package com.easy.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.data.elasticsearch.client.ClientConfiguration;
+import org.springframework.data.elasticsearch.client.RestClients;
 import org.springframework.util.StringUtils;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.Objects;
 
 @Slf4j
 @ConditionalOnProperty(
@@ -20,41 +16,33 @@ import java.net.UnknownHostException;
         havingValue = "true"
 )
 public class EasyElasticsearchConfiguration {
+    private static final long default_timeout_millis = 60;
+    @Bean
+    public RestHighLevelClient elasticsearchClient(ConfigProperties configProperties){
+        String[] urls = configProperties.getUrls().split(",");
+        ClientConfiguration configuration =
+                StringUtils.hasText(configProperties.getUsername()) && StringUtils.hasText(configProperties.getPassword()) ?
+                        ClientConfiguration.builder()
+                                .connectedTo(urls)
+                                .withBasicAuth(configProperties.getUsername(), configProperties.getPassword())
+                                .withConnectTimeout(
+                                        Objects.isNull(configProperties.getConnectTimeout()) ?
+                                                default_timeout_millis : configProperties.getConnectTimeout()
+                                ).withSocketTimeout(
+                                        Objects.isNull(configProperties.getSocketTimeout()) ?
+                                                default_timeout_millis : configProperties.getSocketTimeout()
+                                ).build()
+                        :
+                        ClientConfiguration.builder()
+                                .connectedTo(urls)
+                                .withConnectTimeout(
+                                        Objects.isNull(configProperties.getConnectTimeout()) ?
+                                                default_timeout_millis : configProperties.getConnectTimeout()
+                                ).withSocketTimeout(
+                                        Objects.isNull(configProperties.getSocketTimeout()) ?
+                                                default_timeout_millis : configProperties.getSocketTimeout()
+                                ).build();
 
-    private Client client;
-
-    public Client transportClient(ConfigProperties configProperties){
-        TransportClient transportClient = null;
-        try {
-            if (!StringUtils.isEmpty(configProperties.getUsername()) && !StringUtils.isEmpty(configProperties.getPassword())){
-                String xpack = configProperties.getUsername() + ":" + configProperties.getPassword();
-                transportClient = new PreBuiltTransportClient(Settings.builder()
-                        .put("cluster.name",configProperties.getName())
-                        .put("xpack.security,user", xpack)
-                        .build());
-            }else{
-                transportClient = new PreBuiltTransportClient(Settings.builder()
-                        .put("cluster.name",configProperties.getName())
-                        .build());
-            }
-            String[] nodes = configProperties.getNodes().split(",");
-            for (String node : nodes){
-                TransportAddress transportAddress = new TransportAddress(InetAddress.getByName(node),configProperties.getPort());
-                transportClient.addTransportAddress(transportAddress);
-            }
-        }catch (UnknownHostException e){
-            throw new RuntimeException("elasticsearch client error : "+e.getMessage());
-        }
-        return transportClient;
-    }
-
-    @Primary
-    @Bean("easyElasticsearch")
-    public Client easyElasticsearch(ConfigProperties configProperties){
-        if (StringUtils.isEmpty(client) || StringUtils.isEmpty(client.admin())){
-            client = transportClient(configProperties);
-            return client;
-        }
-        return client;
+        return RestClients.create(configuration).rest();
     }
 }

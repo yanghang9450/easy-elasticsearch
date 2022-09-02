@@ -8,11 +8,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 )
 @Data
 public class ConfigProperties {
-    private String name;
-    private String nodes;
-    private Integer port;
+    private String urls;
     private String username;
     private String password;
+    private Long socketTimeout;
+    private Long connectTimeout;
 
     public ConfigProperties(){}
 }

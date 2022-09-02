@@ -14,8 +14,6 @@ public class EasyInsertIndex {
     private final String id;
     @NotNull(message = "index not null")
     private final String index;
-    @NotNull(message = "index type not null")
-    private final String indexType;
 
     protected List<InsertData> data;
     public static Builder builder(){
@@ -25,13 +23,11 @@ public class EasyInsertIndex {
     public EasyInsertIndex (Builder builder){
         this.id = builder.id;
         this.index = builder.index;
-        this.indexType = builder.indexType;
         this.data = builder.data;
     }
     public static class Builder {
         private String id;
         private String index;
-        private String indexType;
         private List<InsertData> data;
         public Builder id(String id) {
             this.id = id ;
@@ -39,10 +35,6 @@ public class EasyInsertIndex {
         }
         public Builder index(String index) {
             this.index = index ;
-            return this;
-        }
-        public Builder indexType(String indexType) {
-            this.indexType = indexType ;
             return this;
         }
         public Builder data(InsertData... data) {
@@ -62,14 +54,13 @@ public class EasyInsertIndex {
 
         }
 
-        public Builder(String id ,String index, String indexType, List<InsertData> data) {
+        public Builder(String id ,String index, List<InsertData> data) {
             this.id = id;
             this.index = index;
-            this.indexType = indexType;
             this.data = data;
         }
         public EasyInsertIndex build(){
-            return new EasyInsertIndex(new Builder(this.id,this.index,this.indexType,this.data));
+            return new EasyInsertIndex(new Builder(this.id,this.index,this.data));
         }
     }
 }
