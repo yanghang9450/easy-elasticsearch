@@ -1,12 +1,13 @@
 package com.easy.elasticsearch;
 
+import com.easy.annotations.EasyIndex;
 import com.easy.entity.*;
 import com.easy.response.EasyResponse;
 import com.easy.response.ListResult;
 import com.easy.response.Result;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.DisMaxQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -20,7 +21,9 @@ import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -28,13 +31,13 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-
+/**
+ * @author yanghang
+ */
 @Component
 public class EasyElasticsearchTemplate {
       private final static Logger logger = LoggerFactory.getLogger(EasyElasticsearchTemplate.class);
@@ -97,26 +100,32 @@ public class EasyElasticsearchTemplate {
      * @param <T> Object
      * @return <T>Result<T>
      */
-      public <T>Result<T> save(EasyInsertIndex insertIndex){
-          if (CollectionUtils.isEmpty(insertIndex.getData())){
+      public <T>Result<T> save(EasyInsertIndex insertIndex ,Class<T> clazz){
+          if (CollectionUtils.isEmpty(insertIndex.getData()) && Objects.isNull(insertIndex.getValue())){
               return EasyResponse.fail(400,"insert data not null");
           }
-          Map<String, Object> collect = insertIndex.getData()
-                  .stream().collect(
-                          Collectors.toMap(
-                                  InsertData::getKey, InsertData::getValue, (key1, key2) -> key1
-                          ));
-          //elasticsearchRestTemplate.save(collect);
+          if (!StringUtils.hasText(this.getIndexAnnotationValue(clazz)) && !StringUtils.hasText(insertIndex.getIndex()) ){
+              return EasyResponse.fail(400,"insert index not null");
+          }
           Gson gson = new GsonBuilder()
                   .setDateFormat(DateDefaultFormat)
                   .create();
-          return EasyResponse.build(new Gson().fromJson(gson.toJson(elasticsearchRestTemplate.save(collect)), new TypeToken<T>() {
-          }.getType()));
-         /* Gson gson = new GsonBuilder()
-                  .setDateFormat(DateDefaultFormat)
-                  .create();
-          return EasyResponse.build(new Gson().fromJson(gson.toJson(collect), new TypeToken<T>() {
-          }.getType()));*/
+          T insert = Objects.isNull(insertIndex.getValue()) ?
+                  new Gson().fromJson(gson.toJson(insertIndex.getData()
+                          .stream().collect(
+                                  Collectors.toMap(
+                                          InsertData::getKey, InsertData::getValue, (key1, key2) -> key1
+                                  ))
+                  ), clazz) : new Gson().fromJson(gson.toJson(insertIndex.getValue()),clazz);
+          return EasyResponse.build(
+                  elasticsearchRestTemplate.save(
+                          insert,
+                          IndexCoordinates.of(
+                                  StringUtils.hasText(insertIndex.getIndex()) ?
+                                          insertIndex.getIndex() : this.getIndexAnnotationValue(clazz)
+                                  )
+                          )
+                  );
       }
 
     /**
@@ -124,33 +133,18 @@ public class EasyElasticsearchTemplate {
      * @param deleteIndex delete request body
      * @return Result<String>
      */
-    public Result<String> delete(EasyDeleteIndex deleteIndex){
-          this.indexIdAndConditionValid(deleteIndex.getId(),deleteIndex.getCondition());
-          DisMaxQueryBuilder maxQueryBuilder = QueryBuilders.disMaxQuery();
-          if (StringUtils.hasText(deleteIndex.getId())){
-              maxQueryBuilder.add(QueryBuilders.termQuery(Id,deleteIndex.getId()));
-          }
-          for ( QueryBuilder builder : this.condition(deleteIndex.getCondition())){
-              maxQueryBuilder = this.joinQuery(maxQueryBuilder,builder);
-          }
-          /*new DeleteByQueryRequestBuilder(easyElasticsearch, DeleteByQueryAction.INSTANCE)
-                  .filter(maxQueryBuilder).source(deleteIndex.getIndex())
-                  .execute(
-                          new ActionListener<BulkByScrollResponse>() {
-                              @Override
-                              public void onResponse(BulkByScrollResponse response) {
-                                  long deleted = response.getDeleted();
-                                  logger.info("success ！ delete " + deleted + " count");
-                              }
-                              @Override
-                              public void onFailure(Exception e) {
-                                  logger.error("delete failed ！");
-                                  throw new RuntimeException(e.getMessage());
-                              }
-                          }
-                  );*/
+    public <T>Result<String> delete(EasyDeleteIndex deleteIndex,Class<T> tClass){
+        this.indexIdAndConditionValid(deleteIndex.getId(),deleteIndex.getCondition());
+        BoolQueryBuilder builder = new BoolQueryBuilder();
+        if (StringUtils.hasText(deleteIndex.getId())){
+            builder.must(QueryBuilders.termQuery(Id,deleteIndex.getId()));
+        }
+        for ( QueryBuilder condition : this.condition(deleteIndex.getCondition())){
+            builder.must(condition);
+        }
+        elasticsearchRestTemplate.delete(new NativeSearchQuery(builder),tClass,IndexCoordinates.of(deleteIndex.getIndex()));
         logger.info("delete data success");
-        return EasyResponse.build(elasticsearchRestTemplate.delete(maxQueryBuilder,IndexCoordinates.of(deleteIndex.getIndex())));
+        return EasyResponse.build("delete data success");
       }
       private void indexIdAndConditionValid(String id , List<Condition> conditions){
           if (!StringUtils.hasText(id) && CollectionUtils.isEmpty(conditions)){
@@ -161,7 +155,7 @@ public class EasyElasticsearchTemplate {
       private <T>ListResult<T> response(SearchHits<T> hits , Class<T> clazz , int size){
           List<T> results = new ArrayList<>();
           for (SearchHit<T> hit : hits.getSearchHits() ){
-              results.add(new Gson().fromJson(hit.getContent().toString(),clazz));
+              results.add(new Gson().fromJson(new Gson().toJson(hit.getContent()),clazz));
           }
           if (CollectionUtils.isEmpty(results)) return new ListResult<T>(new ArrayList<>(),0,0);
           return new ListResult<>(
@@ -274,6 +268,14 @@ public class EasyElasticsearchTemplate {
               return QueryBuilders.wildcardQuery(name,value.toString());
           }else if (Match.MATCH.toString().equals(match)){
               return QueryBuilders.matchQuery(name,value);
+          }else if(Match.GT.toString().equals(match)){
+              return QueryBuilders.rangeQuery(name).gt(value);
+          }else if(Match.GTE.toString().equals(match)){
+              return QueryBuilders.rangeQuery(name).gte(value);
+          }else if(Match.LT.toString().equals(match)){
+              return QueryBuilders.rangeQuery(name).lt(value);
+          }else if(Match.LTE.toString().equals(match)){
+              return QueryBuilders.rangeQuery(name).lte(value);
           }else
               return QueryBuilders.matchQuery(name,value);
      }
@@ -285,5 +287,9 @@ public class EasyElasticsearchTemplate {
          String regex = ".*[a-zA-Z]+.*";
          Matcher matcher = Pattern.compile(regex).matcher(var);
          return matcher.matches();
+     }
+
+     private <T>String getIndexAnnotationValue(Class<T>  tClass){
+        return tClass.getAnnotation(EasyIndex.class).name();
      }
 }

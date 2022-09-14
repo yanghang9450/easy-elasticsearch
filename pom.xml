@@ -61,7 +61,6 @@
         </dependency>
     </dependencies>
     <distributionManagement>
-
     </distributionManagement>
     <build>
         <plugins>

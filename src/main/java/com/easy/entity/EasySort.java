@@ -1,7 +1,9 @@
 package com.easy.entity;
 
 import lombok.Data;
-
+/**
+ * @author yanghang
+ */
 @Data
 public class EasySort {
     private String sortField;

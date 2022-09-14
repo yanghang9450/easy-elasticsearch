@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
+/**
+ * @author yanghang
+ */
 @Getter
 public class EasySearchBody {
     private final String index;

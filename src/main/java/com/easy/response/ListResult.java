@@ -3,7 +3,9 @@ package com.easy.response;
 import lombok.Data;
 
 import java.util.List;
-
+/**
+ * @author yanghang
+ */
 @Data
 public class ListResult<T> {
     private List<T> data;

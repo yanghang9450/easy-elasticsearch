@@ -4,7 +4,9 @@ import lombok.ToString;
 import lombok.Value;
 
 import java.io.Serializable;
-
+/**
+ * @author yanghang
+ */
 @ToString
 @Value(staticConstructor = "of")
 public class Result<T>  implements Serializable {

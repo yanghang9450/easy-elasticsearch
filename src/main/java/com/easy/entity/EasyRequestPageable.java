@@ -6,6 +6,9 @@ import lombok.Data;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
+/**
+ * @author yanghang
+ */
 @Data
 @Builder
 public class EasyRequestPageable {

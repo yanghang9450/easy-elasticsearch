@@ -2,7 +2,9 @@ package com.easy.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
+/**
+ * @author yanghang
+ */
 @ConfigurationProperties(
         prefix = "easy.elasticsearch.cluster"
 )

@@ -6,19 +6,22 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.RestClients;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.Objects;
-
+/**
+ * @author yanghang
+ */
 @Slf4j
 @ConditionalOnProperty(
         name = {"easy.elasticsearch.cluster.enabled"},
         havingValue = "true"
 )
 public class EasyElasticsearchConfiguration {
-    private static final long default_timeout_millis = 60;
+    private static final long default_timeout_millis = 60000;
     @Bean
-    public RestHighLevelClient elasticsearchClient(ConfigProperties configProperties){
+    public RestHighLevelClient restHighLevelClient(ConfigProperties configProperties){
         String[] urls = configProperties.getUrls().split(",");
         ClientConfiguration configuration =
                 StringUtils.hasText(configProperties.getUsername()) && StringUtils.hasText(configProperties.getPassword()) ?
@@ -32,8 +35,7 @@ public class EasyElasticsearchConfiguration {
                                         Objects.isNull(configProperties.getSocketTimeout()) ?
                                                 default_timeout_millis : configProperties.getSocketTimeout()
                                 ).build()
-                        :
-                        ClientConfiguration.builder()
+                        : ClientConfiguration.builder()
                                 .connectedTo(urls)
                                 .withConnectTimeout(
                                         Objects.isNull(configProperties.getConnectTimeout()) ?

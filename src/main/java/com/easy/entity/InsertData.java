@@ -4,7 +4,9 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * @author yanghang
+ */
 @Getter
 public class InsertData {
 

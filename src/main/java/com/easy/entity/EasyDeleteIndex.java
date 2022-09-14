@@ -4,7 +4,9 @@ import lombok.Getter;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
-
+/**
+ * @author yanghang
+ */
 @Getter
 public class EasyDeleteIndex {
 

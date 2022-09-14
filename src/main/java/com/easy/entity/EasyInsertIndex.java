@@ -7,32 +7,30 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
+/**
+ * @author yanghang
+ */
 @Getter
 public class EasyInsertIndex {
-    @NotNull(message = "id not null")
-    private final String id;
     @NotNull(message = "index not null")
     private final String index;
 
     protected List<InsertData> data;
+
+    protected Object value;
     public static Builder builder(){
         return new Builder();
     }
 
     public EasyInsertIndex (Builder builder){
-        this.id = builder.id;
         this.index = builder.index;
         this.data = builder.data;
+        this.value = builder.value;
     }
     public static class Builder {
-        private String id;
         private String index;
         private List<InsertData> data;
-        public Builder id(String id) {
-            this.id = id ;
-            return this;
-        }
+        protected Object value;
         public Builder index(String index) {
             this.index = index ;
             return this;
@@ -46,6 +44,10 @@ public class EasyInsertIndex {
             this.data = ds;
             return this;
         }
+        public Builder value(Object value){
+            this.value = value;
+            return this;
+        }
         public Builder data(List<InsertData> data){
             this.data = data;
             return this;
@@ -54,13 +56,13 @@ public class EasyInsertIndex {
 
         }
 
-        public Builder(String id ,String index, List<InsertData> data) {
-            this.id = id;
+        public Builder(String index, List<InsertData> data,Object value) {
             this.index = index;
             this.data = data;
+            this.value = value;
         }
         public EasyInsertIndex build(){
-            return new EasyInsertIndex(new Builder(this.id,this.index,this.data));
+            return new EasyInsertIndex(new Builder(this.index,this.data,this.value));
         }
     }
 }
